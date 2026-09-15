@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Transaction root cause analysis result",
+  "description": "Application-level JSON Schema for one resolved customer and transaction. This full Draft 2020-12 schema is not a claim of support by an LLM provider's structured-output subset. Example records and locators prefixed with synthetic/ are synthetic demonstration evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "customerId",
+    "transactionId",
+    "rootCause",
+    "failureFlow",
+    "evidence",
+    "recommendation"
+  ],
+  "properties": {
+    "customerId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "transactionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rootCause": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "summary", "evidenceIds", "limitations"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["identified", "suspected", "insufficient_evidence", "no_failure"]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidenceIds": {
+          "$ref": "#/$defs/evidenceReferences"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "failureFlow": {
+      "type": "array",
+      "description": "Evidence-backed event sequence. Empty when no relevant events are available. Ordering must reflect available causal links, not merely timestamps.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["step", "timestamp", "service", "event", "evidenceIds"],
+        "properties": {
+          "step": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "timestamp": {
+            "$ref": "#/$defs/nullableTimestamp"
+          },
+          "service": {
+            "type": "string",
+            "minLength": 1
+          },
+          "event": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidenceIds": {
+            "$ref": "#/$defs/evidenceReferences",
+            "minItems": 1
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "description": "Source observations with provenance. Application validation must additionally check unique evidence IDs, citation resolution, customer and transaction scope, and source fidelity.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidenceId", "source", "locator", "traceId", "timestamp", "excerpt"],
+        "properties": {
+          "evidenceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "type": "string",
+            "enum": ["file", "api", "database"]
+          },
+          "locator": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Adapter-supplied source reference, such as an allowlisted file and line, API response record ID, or database table and primary key. synthetic/ denotes demonstration evidence."
+          },
+          "traceId": {
+            "type": ["string", "null"],
+            "minLength": 1
+          },
+          "timestamp": {
+            "$ref": "#/$defs/nullableTimestamp"
+          },
+          "excerpt": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Source-supplied excerpt or deterministic record rendering; never an invented quotation."
+          }
+        }
+      }
+    },
+    "recommendation": {
+      "type": "array",
+      "description": "Suggested actions only; the RCA agent does not execute remediation.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action", "reason", "evidenceIds"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidenceIds": {
+            "$ref": "#/$defs/evidenceReferences"
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "rootCause": {
+            "properties": {
+              "status": {"enum": ["identified", "suspected", "no_failure"]}
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "evidence": {"minItems": 1},
+          "rootCause": {
+            "properties": {
+              "evidenceIds": {"minItems": 1}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "rootCause": {
+            "properties": {
+              "status": {"enum": ["suspected", "insufficient_evidence"]}
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "rootCause": {
+            "properties": {
+              "limitations": {"minItems": 1}
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "evidenceReferences": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "References to evidence.evidenceId values. Referential integrity requires application validation."
+    },
+    "nullableTimestamp": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "A source timestamp with timezone, normalized to UTC when available; null when unavailable. Enable date-time format checking in the application validator."
+    }
+  }
+}

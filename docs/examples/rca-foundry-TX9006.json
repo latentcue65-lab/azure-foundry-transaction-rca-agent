@@ -1,0 +1,39 @@
+{
+  "customerId": "C1001",
+  "transactionId": "TX9006",
+  "rootCause": {
+    "status": "insufficient_evidence",
+    "summary": "No checkout events or records for traceId 0000000000000000000000000000232e / attemptId PA1 were found in file logs, API snapshots, or the historical database within the provided 2026-09-14T09:55:00Z\u20132026-09-14T10:05:00Z window. Because there are no observed success or failure records and no instrumentation evidence for this attempt in any of the three required sources, the outcome (success, decline, timeout, or other failure) cannot be determined from the available data.",
+    "evidenceIds": [],
+    "limitations": [
+      "All three required sources (file logs, API snapshot, database audit) were queried and returned no matching events for the provided trace/attempt and time window.",
+      "Transaction snapshot status is UNKNOWN in the input; there may be relevant records outside the provided time window or in unqueried storage.",
+      "No evidence records exist to show a terminal decision (success/decline) or propagated error; a generic upstream symptom (e.g., timeout) cannot be assumed without a recorded root cause.",
+      "No evidence to explain retries or whether the attempt PA1 was a retry of another trace\u2014association only follows the provided trace/attempt mapping."
+    ]
+  },
+  "failureFlow": [],
+  "evidence": [],
+  "recommendation": [
+    {
+      "action": "Extend log search time window and re-query the three sources for traceId 0000000000000000000000000000232e and attempt PA1.",
+      "reason": "Relevant events may have occurred slightly outside the given 10-minute window. Extending the window (for example \u00b130 minutes) increases chance of locating terminal records or correlated retry activity.",
+      "evidenceIds": []
+    },
+    {
+      "action": "Collect and provide any local application or gateway logs (raw log files or direct exports) for customer C1001 and transaction TX9006 tied to traceId 0000000000000000000000232e.",
+      "reason": "No matching events were present in the centralized file/API/database queries; local or gateway logs may contain the missing instrumented entries needed to determine outcome.",
+      "evidenceIds": []
+    },
+    {
+      "action": "Verify instrumentation and tracing for checkout flows: ensure the service producing the traceId writes to the centralized file/API/database pipelines used by investigators.",
+      "reason": "Absence of records across all three sources suggests an instrumentation gap or an index/filtering issue preventing the attempt from being captured in investigative sources.",
+      "evidenceIds": []
+    },
+    {
+      "action": "If available, run a targeted database audit for payment attempts using customerId C1001 and transactionId TX9006 (not only traceId/attemptId).",
+      "reason": "An association by customerId/transactionId may reveal attempts or reconciliations that lack the recorded trace mapping used in the initial query.",
+      "evidenceIds": []
+    }
+  ]
+}

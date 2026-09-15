@@ -1,0 +1,162 @@
+{
+  "customerId": "C1001",
+  "transactionId": "TX9007",
+  "rootCause": {
+    "status": "insufficient_evidence",
+    "summary": "Observations show the payment pipeline completed successfully (payment.received -> payment.committed -> payment.succeeded) but the checkout recorded both a failure and a success for the same attempt. Specifically, payment was committed (database:EV-0030) and payment accepted (api:EV-0031), yet checkout emitted checkout.failed (file:EV-0032) while a checkout replica recorded checkout.succeeded (database:EV-0033) at the same timestamp. The conflicting terminal records for attempt PA1 (file:EV-0032 vs database:EV-0033) are not explained by any retrieved source, so the underlying cause of the mismatch cannot be determined from available evidence.",
+    "evidenceIds": [
+      "file:EV-0028",
+      "api:EV-0029",
+      "database:EV-0030",
+      "api:EV-0031",
+      "file:EV-0032",
+      "database:EV-0033"
+    ],
+    "limitations": [
+      "Terminal records conflict: checkout.failed (file:EV-0032) and checkout.succeeded (database:EV-0033) for the same attempt and timestamp; no retrieved record explains why the primary checkout emitted failure while the replica recorded success.",
+      "No service-level trace or message explaining the checkout failure decision path (e.g., error code, exception, or rollback command) was present in the collected logs.",
+      "Simultaneous timestamps (2026-09-14T10:00:00.100Z) could indicate a race/replication/ordering issue, but there is no evidence in the sources to attribute the mismatch to a specific mechanism (replication lag, retry, write failure, or compensating action).",
+      "Financial/settlement state beyond the recorded 'COMMITTED' decision (database:EV-0030) is not available; downstream settlement or external acquirer records were not provided."
+    ]
+  },
+  "failureFlow": [
+    {
+      "step": 1,
+      "timestamp": "2026-09-14T10:00:00.000Z",
+      "service": "checkout",
+      "event": "checkout.started",
+      "evidenceIds": [
+        "file:EV-0028"
+      ]
+    },
+    {
+      "step": 2,
+      "timestamp": "2026-09-14T10:00:00.070Z",
+      "service": "payment",
+      "event": "payment.received",
+      "evidenceIds": [
+        "api:EV-0029"
+      ]
+    },
+    {
+      "step": 3,
+      "timestamp": "2026-09-14T10:00:00.085Z",
+      "service": "ledger",
+      "event": "payment.committed (decision=COMMITTED)",
+      "evidenceIds": [
+        "database:EV-0030"
+      ]
+    },
+    {
+      "step": 4,
+      "timestamp": "2026-09-14T10:00:00.090Z",
+      "service": "payment",
+      "event": "payment.succeeded (httpStatus=200)",
+      "evidenceIds": [
+        "api:EV-0031"
+      ]
+    },
+    {
+      "step": 5,
+      "timestamp": "2026-09-14T10:00:00.100000Z",
+      "service": "checkout",
+      "event": "checkout.failed (transactionStatus=FAILED)",
+      "evidenceIds": [
+        "file:EV-0032"
+      ]
+    },
+    {
+      "step": 6,
+      "timestamp": "2026-09-14T10:00:00.100000Z",
+      "service": "checkout-replica",
+      "event": "checkout.succeeded (transactionStatus=SUCCEEDED)",
+      "evidenceIds": [
+        "database:EV-0033"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "evidenceId": "file:EV-0028",
+      "source": "file",
+      "locator": "file:logs/checkout.jsonl:13",
+      "traceId": "00000000000000000000232f00000001",
+      "timestamp": "2026-09-14T10:00:00.000Z",
+      "excerpt": "{\"attemptId\": \"PA1\", \"attributes\": {}, \"customerId\": \"C1001\", \"eventId\": \"EV-0028\", \"eventType\": \"checkout.started\", \"message\": \"Checkout started.\", \"parentSpanId\": null, \"service\": \"checkout\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:00Z\", \"traceId\": \"00000000000000000000232f00000001\", \"transactionId\": \"TX9007\"}"
+    },
+    {
+      "evidenceId": "api:EV-0029",
+      "source": "api",
+      "locator": "api:payment-events/snapshot=9da4bc529af6/index=11",
+      "traceId": "00000000000000000000232f00000001",
+      "timestamp": "2026-09-14T10:00:00.070Z",
+      "excerpt": "{\"attemptId\": \"PA1\", \"attributes\": {\"causedByEventId\": \"EV-0028\"}, \"customerId\": \"C1001\", \"eventId\": \"EV-0029\", \"eventType\": \"payment.received\", \"message\": \"Payment attempt received.\", \"parentSpanId\": null, \"service\": \"payment\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:00.070000Z\", \"traceId\": \"00000000000000000000232f00000001\", \"transactionId\": \"TX9007\"}"
+    },
+    {
+      "evidenceId": "database:EV-0030",
+      "source": "database",
+      "locator": "database:transactions.db/events/event_id=EV-0030",
+      "traceId": "00000000000000000000232f00000001",
+      "timestamp": "2026-09-14T10:00:00.085Z",
+      "excerpt": "{\"attemptId\": \"PA1\", \"attributes\": {\"causedByEventId\": \"EV-0029\", \"decision\": \"COMMITTED\"}, \"customerId\": \"C1001\", \"eventId\": \"EV-0030\", \"eventType\": \"payment.committed\", \"message\": \"Payment committed.\", \"parentSpanId\": null, \"service\": \"ledger\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:00.085000Z\", \"traceId\": \"00000000000000000000232f00000001\", \"transactionId\": \"TX9007\"}"
+    },
+    {
+      "evidenceId": "api:EV-0031",
+      "source": "api",
+      "locator": "api:payment-events/snapshot=9da4bc529af6/index=12",
+      "traceId": "00000000000000000000232f00000001",
+      "timestamp": "2026-09-14T10:00:00.090Z",
+      "excerpt": "{\"attemptId\": \"PA1\", \"attributes\": {\"causedByEventId\": \"EV-0030\", \"httpStatus\": 200}, \"customerId\": \"C1001\", \"eventId\": \"EV-0031\", \"eventType\": \"payment.succeeded\", \"message\": \"Payment accepted.\", \"parentSpanId\": null, \"service\": \"payment\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:00.090000Z\", \"traceId\": \"00000000000000000000232f00000001\", \"transactionId\": \"TX9007\"}"
+    },
+    {
+      "evidenceId": "file:EV-0032",
+      "source": "file",
+      "locator": "file:logs/checkout.jsonl:14",
+      "traceId": "00000000000000000000232f00000001",
+      "timestamp": "2026-09-14T10:00:00.100Z",
+      "excerpt": "{\"attemptId\": \"PA1\", \"attributes\": {\"causedByEventId\": \"EV-0031\", \"transactionStatus\": \"FAILED\"}, \"customerId\": \"C1001\", \"eventId\": \"EV-0032\", \"eventType\": \"checkout.failed\", \"message\": \"Checkout failed after payment response.\", \"parentSpanId\": null, \"service\": \"checkout\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:00.100000Z\", \"traceId\": \"00000000000000000000232f00000001\", \"transactionId\": \"TX9007\"}"
+    },
+    {
+      "evidenceId": "database:EV-0033",
+      "source": "database",
+      "locator": "database:transactions.db/events/event_id=EV-0033",
+      "traceId": "00000000000000000000232f00000001",
+      "timestamp": "2026-09-14T10:00:00.100Z",
+      "excerpt": "{\"attemptId\": \"PA1\", \"attributes\": {\"transactionStatus\": \"SUCCEEDED\"}, \"customerId\": \"C1001\", \"eventId\": \"EV-0033\", \"eventType\": \"checkout.succeeded\", \"message\": \"Replica records checkout success at the same time.\", \"parentSpanId\": null, \"service\": \"checkout-replica\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:00.100000Z\", \"traceId\": \"00000000000000000000232f00000001\", \"transactionId\": \"TX9007\"}"
+    }
+  ],
+  "recommendation": [
+    {
+      "action": "Reconcile the conflicting terminal records (file:EV-0032 vs database:EV-0033); collect primary checkout service logs and any local error/exception traces around 2026-09-14T10:00:00.100Z.",
+      "reason": "No retrieved source explains why the checkout service emitted failure while the replica recorded success; the primary cause must be determined by the checkout service logs or its error reporting.",
+      "evidenceIds": [
+        "file:EV-0032",
+        "database:EV-0033"
+      ]
+    },
+    {
+      "action": "Verify ledger commit and downstream settlement for EV-0030 and determine whether a customer charge was finalized; if the payment was captured unintentionally, prepare refund/compensation steps per finance policy.",
+      "reason": "Database evidence shows payment.committed (database:EV-0030) and payment.succeeded (api:EV-0031). Without reconciliation, the system may have recorded a failure while funds were captured.",
+      "evidenceIds": [
+        "database:EV-0030",
+        "api:EV-0031"
+      ]
+    },
+    {
+      "action": "Enable or review additional diagnostic logging and tracing to capture the checkout service's decision path (including error codes, exception stacks, and commit identifiers) and ensure trace-id propagation to replica writes.",
+      "reason": "Simultaneous/contradictory terminal records suggest an ordering/replication or decision-path visibility problem; richer diagnostics will allow root-cause identification if this recurs.",
+      "evidenceIds": [
+        "file:EV-0032",
+        "database:EV-0033",
+        "database:EV-0030"
+      ]
+    },
+    {
+      "action": "If immediate customer-impact mitigation is required, coordinate finance and support to check whether the customer was charged and notify the customer until reconciliation completes; avoid blind retries of payment.",
+      "reason": "Ledger shows a COMMITTED decision; blind retries could cause duplicate charges. Confirm captured state before acting.",
+      "evidenceIds": [
+        "database:EV-0030"
+      ]
+    }
+  ]
+}

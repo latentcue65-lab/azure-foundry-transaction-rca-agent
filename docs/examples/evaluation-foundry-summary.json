@@ -1,0 +1,133 @@
+{
+  "mode": "foundry",
+  "llmEvaluation": true,
+  "createdAt": "2026-09-15T03:21:58.358802+00:00",
+  "passed": 8,
+  "total": 8,
+  "rescoredSavedAudits": true,
+  "limitations": "Automated status, coverage and recovery checks are not a semantic RCA accuracy score. Review linked reports for causal support and recommendation quality. Replay uses no LLM.",
+  "results": [
+    {
+      "transactionId": "TX9001",
+      "passed": true,
+      "checks": {
+        "completed": true,
+        "findingStatus": true,
+        "allSourcesCovered": true,
+        "customerTransaction": true
+      },
+      "status": "identified",
+      "agentVersion": "3",
+      "elapsedMs": 40343,
+      "toolCalls": 3,
+      "modelTurns": 4
+    },
+    {
+      "transactionId": "TX9002",
+      "passed": true,
+      "checks": {
+        "completed": true,
+        "findingStatus": true,
+        "allSourcesCovered": true,
+        "customerTransaction": true
+      },
+      "status": "identified",
+      "agentVersion": "3",
+      "elapsedMs": 38547,
+      "toolCalls": 3,
+      "modelTurns": 4
+    },
+    {
+      "transactionId": "TX9003",
+      "passed": true,
+      "checks": {
+        "completed": true,
+        "findingStatus": true,
+        "allSourcesCovered": true,
+        "customerTransaction": true
+      },
+      "status": "suspected",
+      "agentVersion": "3",
+      "elapsedMs": 36375,
+      "toolCalls": 3,
+      "modelTurns": 4
+    },
+    {
+      "transactionId": "TX9004",
+      "passed": true,
+      "checks": {
+        "completed": true,
+        "findingStatus": true,
+        "allSourcesCovered": true,
+        "customerTransaction": true
+      },
+      "status": "no_failure",
+      "agentVersion": "3",
+      "elapsedMs": 42703,
+      "toolCalls": 3,
+      "modelTurns": 4
+    },
+    {
+      "transactionId": "TX9005",
+      "passed": true,
+      "checks": {
+        "completed": true,
+        "findingStatus": true,
+        "allSourcesCovered": true,
+        "customerTransaction": true,
+        "recoveryMentioned": true,
+        "bothAttemptOutcomesCited": true
+      },
+      "status": "suspected",
+      "agentVersion": "3",
+      "elapsedMs": 50016,
+      "toolCalls": 3,
+      "modelTurns": 4
+    },
+    {
+      "transactionId": "TX9006",
+      "passed": true,
+      "checks": {
+        "completed": true,
+        "findingStatus": true,
+        "allSourcesCovered": true,
+        "customerTransaction": true
+      },
+      "status": "insufficient_evidence",
+      "agentVersion": "3",
+      "elapsedMs": 26562,
+      "toolCalls": 4,
+      "modelTurns": 5
+    },
+    {
+      "transactionId": "TX9007",
+      "passed": true,
+      "checks": {
+        "completed": true,
+        "findingStatus": true,
+        "allSourcesCovered": true,
+        "customerTransaction": true
+      },
+      "status": "insufficient_evidence",
+      "agentVersion": "3",
+      "elapsedMs": 47282,
+      "toolCalls": 3,
+      "modelTurns": 4
+    },
+    {
+      "transactionId": "TX9008",
+      "passed": true,
+      "checks": {
+        "completed": true,
+        "findingStatus": true,
+        "allSourcesCovered": true,
+        "customerTransaction": true
+      },
+      "status": "identified",
+      "agentVersion": "3",
+      "elapsedMs": 53578,
+      "toolCalls": 3,
+      "modelTurns": 4
+    }
+  ]
+}

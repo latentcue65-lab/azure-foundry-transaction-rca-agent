@@ -1,0 +1,195 @@
+{
+  "customerId": "C1001",
+  "transactionId": "TX9005",
+  "rootCause": {
+    "status": "suspected",
+    "summary": "The first payment attempt (PA1) failed because the payment service recorded an upstream timeout (http 504, errorCode=UPSTREAM_TIMEOUT) which caused checkout to fail. The system retried (PA2); the retry was committed in the ledger and the payment succeeded, allowing the checkout to recover. The specific underlying reason for the upstream timeout (provider outage, network, throttling, etc.) is not present in the collected logs.",
+    "evidenceIds": [
+      "api:EV-0022",
+      "file:EV-0023",
+      "api:EV-0021",
+      "file:EV-0020",
+      "file:EV-0024",
+      "database:EV-0025",
+      "api:EV-0026",
+      "file:EV-0027"
+    ],
+    "limitations": [
+      "api:EV-0022 records an UPSTREAM_TIMEOUT and httpStatus=504 but explicitly lacks provider details \u2014 there are no provider-side logs or error codes to explain why the timeout occurred.",
+      "No network/provider traces or request identifiers were captured in the available sources to attribute the timeout to a specific downstream cause (provider outage, transient network, rate limit, etc.).",
+      "The event chain shows a successful retry, but the retry's success does not explain the root cause of the initial timeout; underlying cause remains unconfirmed."
+    ]
+  },
+  "failureFlow": [
+    {
+      "step": 1,
+      "timestamp": "2026-09-14T10:00:00.000Z",
+      "service": "checkout",
+      "event": "checkout.started \u2014 Checkout started for attempt PA1.",
+      "evidenceIds": [
+        "file:EV-0020"
+      ]
+    },
+    {
+      "step": 2,
+      "timestamp": "2026-09-14T10:00:00.070Z",
+      "service": "payment",
+      "event": "payment.received \u2014 Payment attempt received for PA1.",
+      "evidenceIds": [
+        "api:EV-0021"
+      ]
+    },
+    {
+      "step": 3,
+      "timestamp": "2026-09-14T10:00:00.090Z",
+      "service": "payment",
+      "event": "payment.timeout \u2014 Upstream payment request timed out (httpStatus=504, errorCode=UPSTREAM_TIMEOUT) for PA1.",
+      "evidenceIds": [
+        "api:EV-0022"
+      ]
+    },
+    {
+      "step": 4,
+      "timestamp": "2026-09-14T10:00:00.100000Z",
+      "service": "checkout",
+      "event": "checkout.failed \u2014 Checkout failed after payment response for PA1.",
+      "evidenceIds": [
+        "file:EV-0023"
+      ]
+    },
+    {
+      "step": 5,
+      "timestamp": "2026-09-14T10:00:01.000Z",
+      "service": "checkout",
+      "event": "checkout.retry \u2014 Retry started with new attempt PA2.",
+      "evidenceIds": [
+        "file:EV-0024"
+      ]
+    },
+    {
+      "step": 6,
+      "timestamp": "2026-09-14T10:00:01.085Z",
+      "service": "ledger",
+      "event": "payment.committed \u2014 Retry payment committed (decision=COMMITTED) for PA2.",
+      "evidenceIds": [
+        "database:EV-0025"
+      ]
+    },
+    {
+      "step": 7,
+      "timestamp": "2026-09-14T10:00:01.090000Z",
+      "service": "payment",
+      "event": "payment.succeeded \u2014 Retry payment accepted (httpStatus=200) for PA2.",
+      "evidenceIds": [
+        "api:EV-0026"
+      ]
+    },
+    {
+      "step": 8,
+      "timestamp": "2026-09-14T10:00:01.100000Z",
+      "service": "checkout",
+      "event": "checkout.succeeded \u2014 Transaction recovered; checkout succeeded for PA2.",
+      "evidenceIds": [
+        "file:EV-0027"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "evidenceId": "file:EV-0020",
+      "source": "file",
+      "locator": "file:logs/checkout.jsonl:9",
+      "traceId": "00000000000000000000232d00000001",
+      "timestamp": "2026-09-14T10:00:00.000Z",
+      "excerpt": "{\"attemptId\": \"PA1\", \"attributes\": {}, \"customerId\": \"C1001\", \"eventId\": \"EV-0020\", \"eventType\": \"checkout.started\", \"message\": \"Checkout started.\", \"parentSpanId\": null, \"service\": \"checkout\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:00Z\", \"traceId\": \"00000000000000000000232d00000001\", \"transactionId\": \"TX9005\"}"
+    },
+    {
+      "evidenceId": "api:EV-0021",
+      "source": "api",
+      "locator": "api:payment-events/snapshot=9da4bc529af6/index=8",
+      "traceId": "00000000000000000000232d00000001",
+      "timestamp": "2026-09-14T10:00:00.070Z",
+      "excerpt": "{\"attemptId\": \"PA1\", \"attributes\": {\"causedByEventId\": \"EV-0020\"}, \"customerId\": \"C1001\", \"eventId\": \"EV-0021\", \"eventType\": \"payment.received\", \"message\": \"Payment attempt received.\", \"parentSpanId\": null, \"service\": \"payment\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:00.070000Z\", \"traceId\": \"00000000000000000000232d00000001\", \"transactionId\": \"TX9005\"}"
+    },
+    {
+      "evidenceId": "api:EV-0022",
+      "source": "api",
+      "locator": "api:payment-events/snapshot=9da4bc529af6/index=9",
+      "traceId": "00000000000000000000232d00000001",
+      "timestamp": "2026-09-14T10:00:00.090Z",
+      "excerpt": "{\"attemptId\": \"PA1\", \"attributes\": {\"causedByEventId\": \"EV-0021\", \"errorCode\": \"UPSTREAM_TIMEOUT\", \"httpStatus\": 504}, \"customerId\": \"C1001\", \"eventId\": \"EV-0022\", \"eventType\": \"payment.timeout\", \"message\": \"Upstream payment request timed out; provider details absent.\", \"parentSpanId\": null, \"service\": \"payment\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:00.090000Z\", \"traceId\": \"00000000000000000000232d00000001\", \"transactionId\": \"TX9005\"}"
+    },
+    {
+      "evidenceId": "file:EV-0023",
+      "source": "file",
+      "locator": "file:logs/checkout.jsonl:10",
+      "traceId": "00000000000000000000232d00000001",
+      "timestamp": "2026-09-14T10:00:00.100Z",
+      "excerpt": "{\"attemptId\": \"PA1\", \"attributes\": {\"causedByEventId\": \"EV-0022\", \"transactionStatus\": \"FAILED\"}, \"customerId\": \"C1001\", \"eventId\": \"EV-0023\", \"eventType\": \"checkout.failed\", \"message\": \"Checkout failed after payment response.\", \"parentSpanId\": null, \"service\": \"checkout\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:00.100000Z\", \"traceId\": \"00000000000000000000232d00000001\", \"transactionId\": \"TX9005\"}"
+    },
+    {
+      "evidenceId": "file:EV-0024",
+      "source": "file",
+      "locator": "file:logs/checkout.jsonl:11",
+      "traceId": "00000000000000000000232d00000002",
+      "timestamp": "2026-09-14T10:00:01.000Z",
+      "excerpt": "{\"attemptId\": \"PA2\", \"attributes\": {\"causedByEventId\": \"EV-0023\", \"previousAttemptId\": \"PA1\"}, \"customerId\": \"C1001\", \"eventId\": \"EV-0024\", \"eventType\": \"checkout.retry\", \"message\": \"Retry started with a new trace.\", \"parentSpanId\": null, \"service\": \"checkout\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:01Z\", \"traceId\": \"00000000000000000000232d00000002\", \"transactionId\": \"TX9005\"}"
+    },
+    {
+      "evidenceId": "database:EV-0025",
+      "source": "database",
+      "locator": "database:transactions.db/events/event_id=EV-0025",
+      "traceId": "00000000000000000000232d00000002",
+      "timestamp": "2026-09-14T10:00:01.085Z",
+      "excerpt": "{\"attemptId\": \"PA2\", \"attributes\": {\"causedByEventId\": \"EV-0024\", \"decision\": \"COMMITTED\"}, \"customerId\": \"C1001\", \"eventId\": \"EV-0025\", \"eventType\": \"payment.committed\", \"message\": \"Retry payment committed.\", \"parentSpanId\": null, \"service\": \"ledger\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:01.085000Z\", \"traceId\": \"00000000000000000000232d00000002\", \"transactionId\": \"TX9005\"}"
+    },
+    {
+      "evidenceId": "api:EV-0026",
+      "source": "api",
+      "locator": "api:payment-events/snapshot=9da4bc529af6/index=10",
+      "traceId": "00000000000000000000232d00000002",
+      "timestamp": "2026-09-14T10:00:01.090Z",
+      "excerpt": "{\"attemptId\": \"PA2\", \"attributes\": {\"causedByEventId\": \"EV-0025\", \"httpStatus\": 200}, \"customerId\": \"C1001\", \"eventId\": \"EV-0026\", \"eventType\": \"payment.succeeded\", \"message\": \"Retry payment accepted.\", \"parentSpanId\": null, \"service\": \"payment\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:01.090000Z\", \"traceId\": \"00000000000000000000232d00000002\", \"transactionId\": \"TX9005\"}"
+    },
+    {
+      "evidenceId": "file:EV-0027",
+      "source": "file",
+      "locator": "file:logs/checkout.jsonl:12",
+      "traceId": "00000000000000000000232d00000002",
+      "timestamp": "2026-09-14T10:00:01.100Z",
+      "excerpt": "{\"attemptId\": \"PA2\", \"attributes\": {\"causedByEventId\": \"EV-0026\", \"transactionStatus\": \"SUCCEEDED\"}, \"customerId\": \"C1001\", \"eventId\": \"EV-0027\", \"eventType\": \"checkout.succeeded\", \"message\": \"Transaction recovered; checkout succeeded.\", \"parentSpanId\": null, \"service\": \"checkout\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:01.100000Z\", \"traceId\": \"00000000000000000000232d00000002\", \"transactionId\": \"TX9005\"}"
+    }
+  ],
+  "recommendation": [
+    {
+      "action": "Request full upstream/provider logs and correlation identifiers for the payment request that produced api:EV-0022 (2026-09-14T10:00:00.090Z) to determine why the provider timed out.",
+      "reason": "api:EV-0022 shows UPSTREAM_TIMEOUT (http 504) but contains no provider details; provider logs are required to determine whether this was an outage, network problem, or throttling.",
+      "evidenceIds": [
+        "api:EV-0022"
+      ]
+    },
+    {
+      "action": "Instrument payment error paths to capture provider request IDs, response bodies, and timing metadata when upstream timeouts occur.",
+      "reason": "The absence of provider identifiers in api:EV-0022 prevents root-cause attribution; richer metadata would enable faster diagnosis of future timeout events.",
+      "evidenceIds": [
+        "api:EV-0022"
+      ]
+    },
+    {
+      "action": "Confirm ledger/payment reconciliation for TX9005 to ensure only one successful commit was recorded and there was no double-charge; review database:EV-0025 and api:EV-0026 against provider transaction records.",
+      "reason": "database:EV-0025 shows the retry was COMMITTED and api:EV-0026 shows the payment succeeded; reconciling with provider records prevents financial risk from duplicate processing.",
+      "evidenceIds": [
+        "database:EV-0025",
+        "api:EV-0026"
+      ]
+    },
+    {
+      "action": "Create an alert for increased rate of UPSTREAM_TIMEOUT / 504 responses from the payment service to detect broader provider instability.",
+      "reason": "The observed UPSTREAM_TIMEOUT in api:EV-0022 caused a user-visible failure on the first attempt; proactive alerts enable earlier mitigation and communication.",
+      "evidenceIds": [
+        "api:EV-0022",
+        "file:EV-0023"
+      ]
+    }
+  ]
+}

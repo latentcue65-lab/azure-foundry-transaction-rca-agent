@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sphere | Transaction investigation</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+<header><div><span class="brand">S</span><strong>Sphere <span class="subbrand">/ Transaction intelligence</span></strong></div><div class="row"><span id="mode" class="mode">Checking runtime…</span><a href="/docs">API docs ↗</a></div></header>
+<main>
+  <div class="intro"><span class="eyebrow">CUSTOMER OPERATIONS / ROOT CAUSE ANALYSIS</span><h1>Follow the evidence.</h1><p>One customer. Every relevant trace. Investigate what happened across application logs, payment API events and historical database records.</p></div>
+  <div class="layout">
+    <aside>
+      <form id="form" class="panel">
+        <h2>Start an investigation</h2>
+        <label for="scenario">Try a synthetic scenario</label><select id="scenario"></select>
+        <label for="customer">Customer ID</label><input id="customer" required value="C1001" maxlength="80">
+        <label for="transaction">Transaction ID <span class="muted">· optional</span></label><input id="transaction" value="TX9001" maxlength="80" placeholder="Leave blank to find transactions">
+        <label for="from">From · timestamp with timezone</label><input id="from" required value="2026-09-14T09:55:00Z">
+        <label for="to">To · timestamp with timezone</label><input id="to" required value="2026-09-14T10:05:00Z">
+        <label for="issue">Reported issue</label><textarea id="issue" rows="3" maxlength="2000">Investigate this transaction and explain its outcome.</textarea>
+        <button id="submit" type="submit">Investigate transaction →</button>
+        <p class="small muted">Synthetic data · Read-only investigation<br>Recommendations require a human decision.</p>
+        <p id="error" class="error small" role="alert"></p>
+        <div id="candidates" class="hidden" aria-live="polite"></div>
+      </form>
+      <section class="panel history-panel"><div class="row"><h2>Recent investigations</h2><button id="refresh" class="text-button" type="button">Refresh</button></div><p class="small muted" id="history-label"></p><div id="history"></div></section>
+    </aside>
+    <section class="panel report-panel" aria-live="polite" aria-busy="false" id="report-panel">
+      <div id="empty" class="empty"><span class="empty-icon">⌕</span><h2>Your investigation starts here</h2><p>Select a scenario or enter customer details.<br>The agent will inspect all three sources and build an evidence-backed report.</p><div class="source-tags"><span>01 / File logs</span><span>02 / HTTP API</span><span>03 / SQLite</span></div></div>
+      <div id="working" class="hidden"><div class="spinner"></div><h2>Investigating the transaction</h2><p>Retrieving and inspecting source evidence. The report will appear after validation.</p><span id="elapsed" class="small"></span></div>
+      <div id="result" class="hidden">
+        <div class="row"><span id="status" class="status"></span><div class="row actions"><button id="print" class="secondary" type="button">Print / PDF</button><button id="download" class="secondary" type="button">Download JSON</button></div></div>
+        <h2 id="title" class="report-title"></h2><div id="execution" class="small"></div>
+        <div id="metrics" class="metrics"></div>
+        <h3>Root cause</h3><p id="summary" class="finding"></p><div id="root-refs"></div><div id="limitations"></div>
+        <h3>Failure flow</h3><ol id="flow" class="timeline"></ol>
+        <h3>Recommended next steps</h3><ol id="recommendations"></ol>
+        <details open><summary>Trace correlation</summary><p class="small muted">Trace and attempt mappings associate records. Arrows below represent explicit cause references in the source data.</p><div id="correlation"></div></details>
+        <details open><summary>Source coverage and tool activity</summary><div id="runmeta"></div><div id="coverage" class="source-tags"></div><div class="table-scroll"><table><thead><tr><th>Tool</th><th>Status</th><th>Events</th><th>Time</th></tr></thead><tbody id="calls"></tbody></table></div></details>
+        <details id="evidence-section"><summary>Evidence records</summary><div id="evidence"></div></details>
+        <details><summary>Exact six-field JSON</summary><pre id="json"></pre></details>
+      </div>
+    </section>
+  </div>
+  <footer>Sphere IT assessment · Local single-user application · Every investigation saves its evidence and execution audit.</footer>
+</main>
+</body>
+</html>

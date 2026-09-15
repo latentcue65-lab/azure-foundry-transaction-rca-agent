@@ -1,0 +1,141 @@
+{
+  "customerId": "C1001",
+  "transactionId": "TX9002",
+  "rootCause": {
+    "status": "identified",
+    "summary": "Payment attempt failed because the ledger could not acquire a database connection: the ledger reported connection pool exhaustion (activeConnections == maxConnections), which returned a 503/POOL_EXHAUSTED to the payment service and caused checkout to fail.",
+    "evidenceIds": [
+      "database:EV-0008",
+      "api:EV-0009",
+      "api:EV-0007",
+      "file:EV-0010",
+      "file:EV-0006"
+    ],
+    "limitations": [
+      "The records show the immediate cause (connection pool exhausted) but do not record why the pool reached capacity (e.g., long-running transactions, connection leak, or traffic spike).",
+      "No multi-minute historical database connection metrics were provided in the bounded time window to determine whether this was a transient spike or a sustained capacity shortfall.",
+      "Clock skew across services is not evident but timestamps are treated as recorded values; deeper timing/causal analysis would require broader traces outside the provided window."
+    ]
+  },
+  "failureFlow": [
+    {
+      "step": 1,
+      "timestamp": "2026-09-14T10:00:00Z",
+      "service": "checkout",
+      "event": "checkout.started",
+      "evidenceIds": [
+        "file:EV-0006"
+      ]
+    },
+    {
+      "step": 2,
+      "timestamp": "2026-09-14T10:00:00.070000Z",
+      "service": "payment",
+      "event": "payment.received",
+      "evidenceIds": [
+        "api:EV-0007"
+      ]
+    },
+    {
+      "step": 3,
+      "timestamp": "2026-09-14T10:00:00.085000Z",
+      "service": "ledger",
+      "event": "database.connection_acquire_failed (pool exhausted)",
+      "evidenceIds": [
+        "database:EV-0008"
+      ]
+    },
+    {
+      "step": 4,
+      "timestamp": "2026-09-14T10:00:00.090000Z",
+      "service": "payment",
+      "event": "payment.failed (POOL_EXHAUSTED, httpStatus=503)",
+      "evidenceIds": [
+        "api:EV-0009"
+      ]
+    },
+    {
+      "step": 5,
+      "timestamp": "2026-09-14T10:00:00.100000Z",
+      "service": "checkout",
+      "event": "checkout.failed after payment response",
+      "evidenceIds": [
+        "file:EV-0010"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "evidenceId": "file:EV-0006",
+      "source": "file",
+      "locator": "file:logs/checkout.jsonl:3",
+      "traceId": "00000000000000000000232a00000001",
+      "timestamp": "2026-09-14T10:00:00.000Z",
+      "excerpt": "{\"attemptId\": \"PA1\", \"attributes\": {}, \"customerId\": \"C1001\", \"eventId\": \"EV-0006\", \"eventType\": \"checkout.started\", \"message\": \"Checkout started.\", \"parentSpanId\": null, \"service\": \"checkout\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:00Z\", \"traceId\": \"00000000000000000000232a00000001\", \"transactionId\": \"TX9002\"}"
+    },
+    {
+      "evidenceId": "api:EV-0007",
+      "source": "api",
+      "locator": "api:payment-events/snapshot=9da4bc529af6/index=2",
+      "traceId": "00000000000000000000232a00000001",
+      "timestamp": "2026-09-14T10:00:00.070Z",
+      "excerpt": "{\"attemptId\": \"PA1\", \"attributes\": {\"causedByEventId\": \"EV-0006\"}, \"customerId\": \"C1001\", \"eventId\": \"EV-0007\", \"eventType\": \"payment.received\", \"message\": \"Payment attempt received.\", \"parentSpanId\": null, \"service\": \"payment\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:00.070000Z\", \"traceId\": \"00000000000000000000232a00000001\", \"transactionId\": \"TX9002\"}"
+    },
+    {
+      "evidenceId": "database:EV-0008",
+      "source": "database",
+      "locator": "database:transactions.db/events/event_id=EV-0008",
+      "traceId": "00000000000000000000232a00000001",
+      "timestamp": "2026-09-14T10:00:00.085Z",
+      "excerpt": "{\"attemptId\": \"PA1\", \"attributes\": {\"acquireTimeoutMs\": 3000, \"activeConnections\": 10, \"causedByEventId\": \"EV-0007\", \"errorCode\": \"POOL_EXHAUSTED\", \"maxConnections\": 10}, \"customerId\": \"C1001\", \"eventId\": \"EV-0008\", \"eventType\": \"database.connection_acquire_failed\", \"message\": \"Connection acquisition failed: pool exhausted.\", \"parentSpanId\": null, \"service\": \"ledger\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:00.085000Z\", \"traceId\": \"00000000000000000000232a00000001\", \"transactionId\": \"TX9002\"}"
+    },
+    {
+      "evidenceId": "api:EV-0009",
+      "source": "api",
+      "locator": "api:payment-events/snapshot=9da4bc529af6/index=3",
+      "traceId": "00000000000000000000232a00000001",
+      "timestamp": "2026-09-14T10:00:00.090Z",
+      "excerpt": "{\"attemptId\": \"PA1\", \"attributes\": {\"causedByEventId\": \"EV-0008\", \"errorCode\": \"POOL_EXHAUSTED\", \"httpStatus\": 503}, \"customerId\": \"C1001\", \"eventId\": \"EV-0009\", \"eventType\": \"payment.failed\", \"message\": \"Ledger connection acquisition failed.\", \"parentSpanId\": null, \"service\": \"payment\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:00.090000Z\", \"traceId\": \"00000000000000000000232a00000001\", \"transactionId\": \"TX9002\"}"
+    },
+    {
+      "evidenceId": "file:EV-0010",
+      "source": "file",
+      "locator": "file:logs/checkout.jsonl:4",
+      "traceId": "00000000000000000000232a00000001",
+      "timestamp": "2026-09-14T10:00:00.100Z",
+      "excerpt": "{\"attemptId\": \"PA1\", \"attributes\": {\"causedByEventId\": \"EV-0009\", \"transactionStatus\": \"FAILED\"}, \"customerId\": \"C1001\", \"eventId\": \"EV-0010\", \"eventType\": \"checkout.failed\", \"message\": \"Checkout failed after payment response.\", \"parentSpanId\": null, \"service\": \"checkout\", \"spanId\": null, \"timestamp\": \"2026-09-14T10:00:00.100000Z\", \"traceId\": \"00000000000000000000232a00000001\", \"transactionId\": \"TX9002\"}"
+    }
+  ],
+  "recommendation": [
+    {
+      "action": "Investigate and remediate ledger DB connection pool exhaustion (increase pool size or fix leaks).",
+      "reason": "Database record shows activeConnections == maxConnections and errorCode POOL_EXHAUSTED, which directly preceded the payment failure.",
+      "evidenceIds": [
+        "database:EV-0008",
+        "api:EV-0009"
+      ]
+    },
+    {
+      "action": "Add or review instrumentation and alerts for connection pool usage and acquisition timeouts.",
+      "reason": "Current data shows an acquisition timeout (acquireTimeoutMs) and pool saturation; proactive alerts would detect recurrence before user impact.",
+      "evidenceIds": [
+        "database:EV-0008"
+      ]
+    },
+    {
+      "action": "Implement/verify graceful retry/backoff in the payment path for transient ledger errors and surface retry decisions to checkout.",
+      "reason": "Payment returned 503/POOL_EXHAUSTED to checkout which immediately failed; controlled retries could allow recovery for transient pool exhaustion without user-visible failure.",
+      "evidenceIds": [
+        "api:EV-0009",
+        "file:EV-0010"
+      ]
+    },
+    {
+      "action": "Perform capacity analysis and runbook update (investigate traffic patterns, long-running transactions, and connection lifecycle).",
+      "reason": "Evidence identifies the exhausted pool but not the root mechanism (leak vs sustained load); capacity planning and runbooks will address underlying risk.",
+      "evidenceIds": [
+        "database:EV-0008"
+      ]
+    }
+  ]
+}

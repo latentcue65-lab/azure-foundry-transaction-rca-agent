@@ -1,0 +1,103 @@
+{
+  "customerId": "C1001",
+  "transactionId": "TX9001",
+  "rootCause": {
+    "status": "identified",
+    "summary": "Wallet debit attempt PA1 was rejected because INR 50.00 was available against a requested INR 125.00 at the debit decision. The payment API propagated INSUFFICIENT_BALANCE and checkout marked transaction TX9001 failed.",
+    "evidenceIds": ["DB-001", "API-002", "FILE-002"],
+    "limitations": [
+      "The evidence does not establish why the wallet had only INR 50.00 available before the payment attempt."
+    ]
+  },
+  "failureFlow": [
+    {
+      "step": 1,
+      "timestamp": "2026-09-14T10:00:00.000Z",
+      "service": "checkout-service",
+      "event": "Checkout starts transaction TX9001 with payment attempt PA1 for INR 125.00.",
+      "evidenceIds": ["FILE-001"]
+    },
+    {
+      "step": 2,
+      "timestamp": "2026-09-14T10:00:00.070Z",
+      "service": "payment-service",
+      "event": "Payment service receives attempt PA1 for INR 125.00.",
+      "evidenceIds": ["API-001"]
+    },
+    {
+      "step": 3,
+      "timestamp": "2026-09-14T10:00:00.085Z",
+      "service": "wallet-service",
+      "event": "The historical debit decision rejects PA1: requested 12500 minor units, available 5000 minor units, currency INR; no debit is committed.",
+      "evidenceIds": ["DB-001"]
+    },
+    {
+      "step": 4,
+      "timestamp": "2026-09-14T10:00:00.090Z",
+      "service": "payment-service",
+      "event": "Payment API returns HTTP 422 and INSUFFICIENT_BALANCE for PA1 after the wallet rejection.",
+      "evidenceIds": ["API-002"]
+    },
+    {
+      "step": 5,
+      "timestamp": "2026-09-14T10:00:00.100Z",
+      "service": "checkout-service",
+      "event": "Checkout consumes the declined payment response and records transaction TX9001 as failed.",
+      "evidenceIds": ["FILE-002"]
+    }
+  ],
+  "evidence": [
+    {
+      "evidenceId": "FILE-001",
+      "source": "file",
+      "locator": "synthetic/checkout.jsonl:1",
+      "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+      "timestamp": "2026-09-14T10:00:00.000Z",
+      "excerpt": "2026-09-14T10:00:00.000Z event=checkout.started service=checkout-service customerId=C1001 transactionId=TX9001 traceId=4bf92f3577b34da6a3ce929d0e0e4736 attemptId=PA1 amountMinor=12500 currency=INR"
+    },
+    {
+      "evidenceId": "API-001",
+      "source": "api",
+      "locator": "synthetic/payment-api-response/events/API-001",
+      "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+      "timestamp": "2026-09-14T10:00:00.070Z",
+      "excerpt": "timestamp=2026-09-14T10:00:00.070Z event=payment.request_received service=payment-service customerId=C1001 transactionId=TX9001 traceId=4bf92f3577b34da6a3ce929d0e0e4736 attemptId=PA1 amountMinor=12500 currency=INR"
+    },
+    {
+      "evidenceId": "DB-001",
+      "source": "database",
+      "locator": "synthetic/rca.db/wallet_debit_audit/audit_id=17",
+      "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+      "timestamp": "2026-09-14T10:00:00.085Z",
+      "excerpt": "audit_id=17 decidedAt=2026-09-14T10:00:00.085Z service=wallet-service customerId=C1001 transactionId=TX9001 traceId=4bf92f3577b34da6a3ce929d0e0e4736 attemptId=PA1 requestedMinor=12500 availableMinorAtDecision=5000 currency=INR decision=REJECTED reason=INSUFFICIENT_BALANCE debitCommitted=false"
+    },
+    {
+      "evidenceId": "API-002",
+      "source": "api",
+      "locator": "synthetic/payment-api-response/events/API-002",
+      "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+      "timestamp": "2026-09-14T10:00:00.090Z",
+      "excerpt": "timestamp=2026-09-14T10:00:00.090Z event=payment.response service=payment-service customerId=C1001 transactionId=TX9001 traceId=4bf92f3577b34da6a3ce929d0e0e4736 attemptId=PA1 walletAuditId=17 httpStatus=422 errorCode=INSUFFICIENT_BALANCE status=DECLINED"
+    },
+    {
+      "evidenceId": "FILE-002",
+      "source": "file",
+      "locator": "synthetic/checkout.jsonl:2",
+      "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+      "timestamp": "2026-09-14T10:00:00.100Z",
+      "excerpt": "2026-09-14T10:00:00.100Z event=checkout.failed service=checkout-service customerId=C1001 transactionId=TX9001 traceId=4bf92f3577b34da6a3ce929d0e0e4736 attemptId=PA1 paymentHttpStatus=422 paymentErrorCode=INSUFFICIENT_BALANCE transactionStatus=FAILED reason=PAYMENT_DECLINED"
+    }
+  ],
+  "recommendation": [
+    {
+      "action": "Ask the customer to add funds or select another payment method before retrying.",
+      "reason": "The debit was rejected with INR 50.00 available against INR 125.00 requested; the recorded rejection committed no debit.",
+      "evidenceIds": ["DB-001", "API-002"]
+    },
+    {
+      "action": "Surface the specific INSUFFICIENT_BALANCE decline reason in customer-facing error handling.",
+      "reason": "The payment response contains a specific decline code that can guide the customer's next action.",
+      "evidenceIds": ["API-002", "FILE-002"]
+    }
+  ]
+}

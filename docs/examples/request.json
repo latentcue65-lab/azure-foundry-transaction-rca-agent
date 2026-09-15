@@ -1,0 +1,7 @@
+{
+  "customerId": "C1001",
+  "transactionId": "TX9001",
+  "fromTime": "2026-09-14T09:55:00Z",
+  "toTime": "2026-09-14T10:05:00Z",
+  "issueDescription": "Investigate this transaction and explain its outcome."
+}
